@@ -1,0 +1,42 @@
+# GPT参考
+# Python関連
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# 環境設定
+.env
+.vscode/
+.idea/
+*.swp
+
+# バーチャル環境
+venv/
+env/
+
+# パッケージ管理ファイル
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info/
+
+# ログファイル
+*.log
+
+# データベース
+*.sqlite3
+
+# テストカバレッジやレポート
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+.cache
+.pytest_cache/
+
+# Flask-Specific
+instance/
+config.py
+config.yaml
