@@ -1,24 +1,25 @@
-from pathlib import Path
-from flask import Flask
-from flask_wtf import CSRFProtect
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify,request
+from flask_socketio import SocketIO, send,emit
+from flask_cors import CORS
 
-csrf = CSRFProtect()
-db = SQLAlchemy()
+app = Flask(__name__)
+CORS(app)  # CORSを有効にする
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_mapping(
-        # SQLiteの設定を追加
-        SQLALCHEMY_DATABASE_URI=f"sqlite:///{Path(__file__).parent.parent / 'local.sqlite'}",
-        SQLALCHEMY_TRACK_MODIFICATIONS =False,
-        SECRET_KEY = "ABCDEFG"
-    )
-    csrf.init_app(app)
-    db.init_app(app)
-    Migrate(app,db)
-    from apps.sampleSite import views
-    app.register_blueprint(views.sampleSite,url_prefix="/")
+@app.route('/')
+def index():
+    return jsonify({"message": "CCレモンゲームへようこそ！"})
 
-    return app
+@socketio.on('message')
+def handleMessage(msg):
+    print('Message: ' + msg)
+    emit(msg, broadcast=True)
+
+@app.route('/play', methods=['POST'])  # POSTメソッドを許可
+def handle_post():
+    data = request.json  # 受信したJSONデータを取得
+    print(data)
+    return jsonify({"message": "データを受け取りました"}), 200
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
