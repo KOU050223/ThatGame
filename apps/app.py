@@ -1,24 +1,26 @@
-from pathlib import Path
-from flask import Flask
-from flask_wtf import CSRFProtect
-from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, Blueprint
+from flask_socketio import SocketIO, emit
 
-csrf = CSRFProtect()
-db = SQLAlchemy()
+# Flaskアプリケーションインスタンスの作成
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_mapping(
-        # SQLiteの設定を追加
-        SQLALCHEMY_DATABASE_URI=f"sqlite:///{Path(__file__).parent.parent / 'local.sqlite'}",
-        SQLALCHEMY_TRACK_MODIFICATIONS =False,
-        SECRET_KEY = "ABCDEFG"
-    )
-    csrf.init_app(app)
-    db.init_app(app)
-    Migrate(app,db)
-    from apps.sampleSite import views
-    app.register_blueprint(views.sampleSite,url_prefix="/")
+# Blueprintの作成
+sample_site = Blueprint(
+    "sampleSite",
+    __name__,
+    template_folder="templates",
+    static_folder="static"
+)
 
-    return app
+@sample_site.route('/')
+def index():
+    return render_template('index.html')
+
+@socketio.on('message')
+def handle_message(data):
+    emit('message', data, broadcast=True)
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5003)

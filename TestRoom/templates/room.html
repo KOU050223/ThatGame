@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Room {{ room_name }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var socket = io();
+            var roomName = "{{ room_name }}";
+            var username = prompt("Enter your name:");
+
+            socket.emit('join', { 'room': roomName, 'username': username });
+
+            socket.on('status', function (data) {
+                var messageBox = document.getElementById('messages');
+                var newMessage = document.createElement('li');
+                newMessage.textContent = data.msg;
+                messageBox.appendChild(newMessage);
+            });
+
+            socket.on('message', function (data) {
+                var messageBox = document.getElementById('messages');
+                var newMessage = document.createElement('li');
+                newMessage.textContent = data.msg;
+                messageBox.appendChild(newMessage);
+            });
+
+            document.getElementById('sendMessage').onsubmit = function (e) {
+                e.preventDefault();
+                var msg = document.getElementById('message').value;
+                socket.emit('message', { 'room': roomName, 'msg': msg });
+                document.getElementById('message').value = '';
+            };
+
+            window.onbeforeunload = function () {
+                socket.emit('leave', { 'room': roomName, 'username': username });
+            };
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Room: {{ room_name }}</h1>
+    <ul id="messages"></ul>
+    <form id="sendMessage">
+        <input id="message" type="text" placeholder="Enter message">
+        <button type="submit">Send</button>
+    </form>
+</body>
+
+</html>
