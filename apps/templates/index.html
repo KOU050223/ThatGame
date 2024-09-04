@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple P2P Messaging</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+
+<body>
+    <h1>Simple P2P Messaging</h1>
+    <div id="messages"></div>
+    <input id="messageInput" placeholder="Type a message...">
+    <button id="sendButton">Send</button>
+
+    <script>
+        var socket = io();
+
+        document.getElementById('sendButton').onclick = function () {
+            var message = document.getElementById('messageInput').value;
+            socket.emit('message', message);
+            document.getElementById('messageInput').value = '';
+        };
+
+        socket.on('message', function (data) {
+            var messagesDiv = document.getElementById('messages');
+            var newMessage = document.createElement('div');
+            newMessage.textContent = data;
+            messagesDiv.appendChild(newMessage);
+        });
+    </script>
+</body>
+
+</html>
