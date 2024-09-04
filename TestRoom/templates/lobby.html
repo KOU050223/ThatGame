@@ -17,7 +17,8 @@
     <ul>
         {% for room in rooms %}
         <!-- 'sampleSite.join_room_view' を使用してルームへのリンクを生成 -->
-        <li><a href="{{ url_for('sampleSite.join_room_view', room_name=room) }}">{{ room }}</a></li>
+        <li><a href="{{ url_for('sampleSite.join_room_view', room_name=room) }}">{{
+                room }}</a></li>
         {% endfor %}
     </ul>
 </body>

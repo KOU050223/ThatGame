@@ -13,7 +13,7 @@ rooms = {}
 rooms_actions = {}  # 各ルームのプレイヤーのアクションを管理
 
 # Blueprintの作成
-sample_site = Blueprint(
+samplesite = Blueprint(
     "sampleSite",
     __name__,
     template_folder="templates",
@@ -21,9 +21,11 @@ sample_site = Blueprint(
 )
 
 # ロビーのルート
-@sample_site.route('/')
+@samplesite.route('/')
 def lobby():
-    return render_template('lobby.html', rooms=rooms)
+    # 満員でない部屋だけを取り出す
+    ava_rooms = {room: users for room, users in rooms.items() if len(users) < 2}
+    return render_template('lobby.html', rooms=ava_rooms)
 
 # ルーム作成のルート
 # @sample_site.route('/create_room', methods=['POST'])
@@ -33,7 +35,8 @@ def lobby():
 #         rooms[room_name] = []
 #     return redirect(url_for('sampleSite.join_room_view', room_name=room_name))
 
-@sample_site.route('/create_room', methods=['POST'])
+@samplesite.route('/create_room', methods=['POST'])
+
 def create_room():
     room_name = request.json.get('room_name')
     if room_name not in rooms:
@@ -53,7 +56,7 @@ def on_create_room(data):
         emit('room_list_update', {'room_name': room_name}, broadcast=True)
 
 # ルーム参加のルート
-@sample_site.route('/room/<room_name>')
+@samplesite.route('/room/<room_name>')
 def join_room_view(room_name):
     if room_name in rooms and len(rooms[room_name]) < 2:
         return render_template('room.html', room_name=room_name)
@@ -69,6 +72,7 @@ def on_join(data):
         join_room(room_name)
         rooms[room_name].append(username)
         emit('status', {'msg': f'{username} has joined the room.'}, room=room_name)
+        emit('room_info', {'users': rooms[room_name]}, room=room_name)
     else:
         emit('status', {'msg': 'Room is full.'})
 
@@ -85,7 +89,8 @@ def on_leave(data):
 def handle_message(data):
     room_name = data['room']
     msg = data['msg']
-    emit('message', {'msg': msg}, room=room_name)
+    username = data['username']
+    emit('message', {'msg': f'{username}:{msg}'}, room=room_name)
 
 @app.route('/play', methods=['POST'])  # POSTメソッドを許可
 def handle_post():
@@ -157,7 +162,7 @@ def process_actions(actions):
 
 
 # Blueprintの登録
-app.register_blueprint(sample_site)
+app.register_blueprint(samplesite)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5003,debug=True)
+    socketio.run(app, host='0.0.0.0', port=5003)
