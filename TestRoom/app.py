@@ -1,10 +1,12 @@
-from flask import Flask, render_template, Blueprint, request, redirect, url_for
+from flask import Flask, render_template, Blueprint, request, redirect, url_for,jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
+CORS(app)  # これでFlask全体でCORSが有効になる
 # グローバル変数として rooms を定義
 rooms = {}
 
@@ -22,13 +24,32 @@ def lobby():
     return render_template('lobby.html', rooms=rooms)
 
 # ルーム作成のルート
+# @sample_site.route('/create_room', methods=['POST'])
+# def create_room():
+#     room_name = request.form['room_name']
+#     if room_name not in rooms:
+#         rooms[room_name] = []
+#     return redirect(url_for('sampleSite.join_room_view', room_name=room_name))
+
 @sample_site.route('/create_room', methods=['POST'])
 def create_room():
-    room_name = request.form['room_name']
+    room_name = request.json.get('room_name')
     if room_name not in rooms:
         rooms[room_name] = []
-    return redirect(url_for('sampleSite.join_room_view', room_name=room_name))
+    return jsonify({'status': 'Room created', 'room_name': room_name})
 
+@app.route('/rooms', methods=['GET'])
+def get_rooms():
+    return jsonify(list(rooms.keys()))
+
+@socketio.on('create_room')
+def on_create_room(data):
+    room_name = data['room_name']
+    if room_name not in rooms:
+        rooms[room_name] = []
+        # 新しいルームが作成されたことをすべてのクライアントに通知
+        emit('room_list_update', {'room_name': room_name}, broadcast=True)
+        
 # ルーム参加のルート
 @sample_site.route('/room/<room_name>')
 def join_room_view(room_name):
