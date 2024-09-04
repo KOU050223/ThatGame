@@ -6,6 +6,8 @@
     <title>Room {{ room_name }}</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
+        var is_start = false//グローバル変数で設定
+
         document.addEventListener('DOMContentLoaded', (event) => {
             var socket = io();
             var roomName = "{{ room_name }}";
@@ -30,9 +32,26 @@
             document.getElementById('sendMessage').onsubmit = function (e) {
                 e.preventDefault();
                 var msg = document.getElementById('message').value;
-                socket.emit('message', { 'room': roomName, 'msg': msg });
+                socket.emit('message', { 'room': roomName, 'username': username, 'msg': msg });
                 document.getElementById('message').value = '';
             };
+
+            socket.on('room_info', function (data) {
+                opponentName = "";
+                is_start = false
+                data.users.forEach(function (user) {
+                    if (user !== username) {
+                        opponentName = user;
+                        is_start = true
+                    }
+                });
+                updateStatusMessage(username, opponentName);
+            });
+
+            function updateStatusMessage(myName, opponentName) {
+                var statusMessage = is_start ? `${myName}VS${opponentName}` : '待機中...';
+                document.getElementById('statusMessage').textContent = statusMessage;
+            }
 
             window.onbeforeunload = function () {
                 socket.emit('leave', { 'room': roomName, 'username': username });
@@ -42,12 +61,25 @@
 </head>
 
 <body>
-    <h1>Room: {{ room_name }}</h1>
-    <ul id="messages"></ul>
-    <form id="sendMessage">
-        <input id="message" type="text" placeholder="Enter message">
-        <button type="submit">Send</button>
-    </form>
+    <table>
+        <td>
+            <h1>Room: {{ room_name }}</h1>
+
+            <ul id="messages"></ul>
+            <form id="sendMessage">
+                <input id="message" type="text" placeholder="Enter message">
+                <button type="submit">Send</button>
+            </form>
+        </td>
+        <td>
+            <h2>
+                <div id="statusMessage"></div>
+            </h2>
+        </td>
+
+
+    </table>
+
 </body>
 
 </html>
