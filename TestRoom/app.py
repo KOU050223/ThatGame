@@ -10,6 +10,8 @@ CORS(app)  # これでFlask全体でCORSが有効になる
 # グローバル変数として rooms を定義
 rooms = {}
 
+rooms_actions = {}  # 各ルームのプレイヤーのアクションを管理
+
 # Blueprintの作成
 sample_site = Blueprint(
     "sampleSite",
@@ -49,7 +51,7 @@ def on_create_room(data):
         rooms[room_name] = []
         # 新しいルームが作成されたことをすべてのクライアントに通知
         emit('room_list_update', {'room_name': room_name}, broadcast=True)
-        
+
 # ルーム参加のルート
 @sample_site.route('/room/<room_name>')
 def join_room_view(room_name):
@@ -85,8 +87,77 @@ def handle_message(data):
     msg = data['msg']
     emit('message', {'msg': msg}, room=room_name)
 
+@app.route('/play', methods=['POST'])  # POSTメソッドを許可
+def handle_post():
+    data = request.json  # 受信したJSONデータを取得
+    print(data)
+    return jsonify({"message": "データを受け取りました"}), 200
+
+@socketio.on('player_action')
+def handle_player_action(data):
+    room_name = data['room']
+    username = data['username']
+    action = data['action']  # 'charge', 'attack', 'defense' など
+
+    # ルームが存在しない場合、初期化
+    if room_name not in rooms_actions:
+        rooms_actions[room_name] = {}
+
+    # プレイヤーのアクションを保存
+    rooms_actions[room_name][username] = action
+    print("データ",room_name,username,rooms_actions[room_name][username])
+    # アクション確認メッセージを送信
+    emit('action_confirmation', {'username': username, 'action': action}, room=room_name)
+
+    # 両プレイヤーがアクションを入力しているか確認
+    if len(rooms_actions[room_name]) == 2:
+        print("両者入力完了")
+        # ここでアクションの結果を処理
+        result = process_actions(rooms_actions[room_name])
+        print(result)
+        # 両プレイヤーに結果を送信
+        emit('action_result', result, room=room_name)
+        
+        # アクションをクリア
+        rooms_actions[room_name].clear()
+
+def process_actions(actions):
+    # 各プレイヤーのアクションに基づいて結果を計算するロジック
+    player1, player2 = list(actions.keys())
+    action1 = actions[player1]
+    action2 = actions[player2]
+
+    # 勝敗判定のロジック
+    if action1 == action2:
+        winner = 'draw'  # 両者が同じアクションを選択した場合は引き分け
+    elif action1 == 'attack' and action2 == 'charge':
+        winner = player1  # 攻撃がチャージに勝つ
+    elif action1 == 'charge' and action2 == 'attack':
+        winner = player2  # 攻撃がチャージに勝つ
+    elif action1 == 'charge' and action2 == 'defense':
+        winner = player1  # チャージが防御に勝つ
+    elif action1 == 'defense' and action2 == 'charge':
+        winner = player2  # チャージが防御に勝つ
+    elif action1 == 'attack' and action2 == 'defense':
+        winner = player1  # 攻撃が防御に勝つ
+    elif action1 == 'defense' and action2 == 'attack':
+        winner = player2  # 攻撃が防御に勝つ
+    else:
+        winner = 'draw'  # その他のケースでは引き分け
+
+    # 結果を辞書で返す
+    result = {
+        'player1': {'username': player1, 'action': action1},
+        'player2': {'username': player2, 'action': action2},
+        'winner': winner if winner != 'draw' else None,  # 引き分けの場合は None
+        'is_draw': winner == 'draw'  # 引き分けかどうかを示すフラグ
+    }
+    
+    return result
+
+
 # Blueprintの登録
 app.register_blueprint(sample_site)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5003)
+    socketio.run(app, host='0.0.0.0', port=5003,debug=True)
