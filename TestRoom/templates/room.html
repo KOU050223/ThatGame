@@ -45,12 +45,20 @@
                         is_start = true
                     }
                 });
-                updateStatusMessage(username, opponentName);
+                updateAnything(username, opponentName);
             });
 
-            function updateStatusMessage(myName, opponentName) {
+            function updateAnything(myName, opponentName) {
+                //statusMessage
                 var statusMessage = is_start ? `${myName}VS${opponentName}` : '待機中...';
                 document.getElementById('statusMessage').textContent = statusMessage;
+                //Button
+                var AttackButton = document.getElementById('AttackButton');
+                AttackButton.style.display = is_start ? 'block' : 'none';
+                var ChargeButton = document.getElementById('ChargeButton');
+                ChargeButton.style.display = is_start ? 'block' : 'none';
+                var GuardButton = document.getElementById('GuardButton');
+                GuardButton.style.display = is_start ? 'block' : 'none';
             }
 
             window.onbeforeunload = function () {
@@ -75,6 +83,13 @@
             <h2>
                 <div id="statusMessage"></div>
             </h2>
+            <table>
+                <td><button id="ChargeButton" style="display:none;">Charge</button></td>
+                <td><button id="AttackButton" style="display:none;">Attack</button></td>
+                <td><button id="GuardButton" style="display:none;">Guard</button></td>
+            </table>
+
+
         </td>
 
 
