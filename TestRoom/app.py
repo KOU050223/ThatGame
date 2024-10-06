@@ -28,20 +28,20 @@ def lobby():
     return render_template('lobby.html', rooms=ava_rooms)
 
 # ルーム作成のルート
-# @sample_site.route('/create_room', methods=['POST'])
-# def create_room():
-#     room_name = request.form['room_name']
-#     if room_name not in rooms:
-#         rooms[room_name] = []
-#     return redirect(url_for('sampleSite.join_room_view', room_name=room_name))
-
 @samplesite.route('/create_room', methods=['POST'])
-
 def create_room():
-    room_name = request.json.get('room_name')
+    room_name = request.form['room_name']
     if room_name not in rooms:
         rooms[room_name] = []
-    return jsonify({'status': 'Room created', 'room_name': room_name})
+    return redirect(url_for('sampleSite.join_room_view', room_name=room_name))
+
+# @samplesite.route('/create_room', methods=['POST'])
+
+# def create_room():
+#     room_name = request.json.get('room_name')
+#     if room_name not in rooms:
+#         rooms[room_name] = []
+#     return jsonify({'status': 'Room created', 'room_name': room_name})
 
 @app.route('/rooms', methods=['GET'])
 def get_rooms():
