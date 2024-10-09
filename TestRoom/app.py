@@ -110,9 +110,15 @@ def handle_post():
     print(data)
     return jsonify({"message": "データを受け取りました"}), 200
 
+@app.route('/rooms')
+def get_rooms():
+    # 現在のルームリストをJSON形式で返す
+    return jsonify(list(rooms.keys()))
+
 @socketio.on('create_room')
 def on_create_room(data):
     room_name = data['room_name']
+    print(rooms)
     if room_name not in rooms:
         rooms[room_name] = []
         emit('room_list_update', {'room_name': room_name}, broadcast=True)
