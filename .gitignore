@@ -40,3 +40,6 @@ coverage.xml
 instance/
 config.py
 config.yaml
+
+#仮想環境
+cloudai
